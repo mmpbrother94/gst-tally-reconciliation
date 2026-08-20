@@ -1,0 +1,11 @@
+# Verified on Python 3.13 with pandas 2.3.2, numpy 2.2.6, openpyxl 3.1.5,
+# Flask 2.3.2.
+#
+# pandas 2.2.3 / numpy 2.1 are the first releases shipping pre-built wheels for
+# Python 3.13; older pins make pip compile from source, which fails on most
+# shared hosting.
+pandas>=2.2.3
+numpy>=2.1.0
+openpyxl>=3.1.5
+Flask>=2.3
+waitress>=2.1

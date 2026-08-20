@@ -1,0 +1,198 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GSTR-2B vs Tally Reconciliation</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand">
+    <svg class="logo" viewBox="0 0 44 44" role="img" aria-label="Reconciliation">
+      <defs>
+        <linearGradient id="lg" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stop-color="#2f7cf6"/>
+          <stop offset="1" stop-color="#7c3aed"/>
+        </linearGradient>
+      </defs>
+      <rect x="1.5" y="1.5" width="41" height="41" rx="11"
+            fill="url(#lg)"/>
+      <!-- two ledgers, offset -->
+      <rect x="9" y="10" width="14" height="19" rx="2.5"
+            fill="#fff" fill-opacity=".92"/>
+      <rect x="21" y="15" width="14" height="19" rx="2.5"
+            fill="#fff" fill-opacity=".62"/>
+      <!-- rules on the front ledger -->
+      <path d="M24 20h8M24 24h8M24 28h5" stroke="#2f3d57"
+            stroke-width="1.6" stroke-linecap="round" stroke-opacity=".5"/>
+      <path d="M12 15h8M12 19h8M12 23h5" stroke="#2f3d57"
+            stroke-width="1.6" stroke-linecap="round" stroke-opacity=".8"/>
+      <!-- the tick that ties them together -->
+      <circle cx="31.5" cy="30.5" r="8" fill="#0f7b4a"/>
+      <path d="M27.8 30.6l2.6 2.6 4.8-5.2" fill="none" stroke="#fff"
+            stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+    <div>
+      <h1>GSTR-2B <span class="vs">vs</span> Tally</h1>
+      <p>Input tax credit reconciliation</p>
+    </div>
+  </div>
+  <div class="topbar-right">
+    <span id="fileTag" class="tag hidden"></span>
+    <button id="themeBtn" class="ghost" title="Toggle theme" type="button">◐</button>
+  </div>
+</header>
+
+<main>
+  <!-- ------------------------------------------------ setup ------------- -->
+  <section id="setup">
+    <div class="drops">
+
+      <div class="card drop" id="dropGst" data-side="gst">
+        <div class="drop-head">
+          <span class="badge portal">GSTR-2B</span>
+          <span class="drop-sub">from the GST portal</span>
+        </div>
+        <label class="dropzone" for="gstUpload">
+          <svg viewBox="0 0 24 24" class="dz-icon" aria-hidden="true">
+            <path d="M12 16V4m0 0L7.5 8.5M12 4l4.5 4.5" fill="none"
+                  stroke="currentColor" stroke-width="1.7"
+                  stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M4 15v3a2 2 0 002 2h12a2 2 0 002-2v-3" fill="none"
+                  stroke="currentColor" stroke-width="1.7"
+                  stroke-linecap="round"/>
+          </svg>
+          <strong id="gstName">Drop the GSTR-2B file here</strong>
+          <span class="dz-hint">or click to browse — .xlsx</span>
+        </label>
+        <input type="file" id="gstUpload" accept=".xlsx,.xls" class="hidden">
+        <div class="drop-foot">
+          <select id="gstExisting" class="mini">
+            <option value="">— or re-use an uploaded sheet —</option>
+          </select>
+          <input id="gstSheet" class="mini" placeholder="Sheet (first by default)">
+        </div>
+      </div>
+
+      <div class="swap" aria-hidden="true">
+        <svg viewBox="0 0 24 24"><path d="M4 9h16M4 9l3.5-3.5M4 9l3.5 3.5
+          M20 15H4m16 0l-3.5-3.5M20 15l-3.5 3.5" fill="none"
+          stroke="currentColor" stroke-width="1.6" stroke-linecap="round"
+          stroke-linejoin="round"/></svg>
+      </div>
+
+      <div class="card drop" id="dropTally" data-side="tally">
+        <div class="drop-head">
+          <span class="badge books">Tally</span>
+          <span class="drop-sub">your purchase register</span>
+        </div>
+        <label class="dropzone" for="tallyUpload">
+          <svg viewBox="0 0 24 24" class="dz-icon" aria-hidden="true">
+            <path d="M12 16V4m0 0L7.5 8.5M12 4l4.5 4.5" fill="none"
+                  stroke="currentColor" stroke-width="1.7"
+                  stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M4 15v3a2 2 0 002 2h12a2 2 0 002-2v-3" fill="none"
+                  stroke="currentColor" stroke-width="1.7"
+                  stroke-linecap="round"/>
+          </svg>
+          <strong id="tallyName">Drop the Tally file here</strong>
+          <span class="dz-hint">or click to browse — .xlsx</span>
+        </label>
+        <input type="file" id="tallyUpload" accept=".xlsx,.xls" class="hidden">
+        <div class="drop-foot">
+          <select id="tallyExisting" class="mini">
+            <option value="">— or re-use an uploaded sheet —</option>
+          </select>
+          <input id="tallySheet" class="mini" placeholder="Sheet (first by default)">
+        </div>
+      </div>
+    </div>
+
+    <div class="card runbar">
+      <p class="runnote">
+        Tally values are made positive and split-rate lines of one bill are
+        merged automatically. Amounts are matched to the nearest rupee.
+      </p>
+      <button id="runBtn" class="primary" type="button" disabled>
+        Reconcile
+      </button>
+    </div>
+  </section>
+
+  <!-- ------------------------------------------------ progress ---------- -->
+  <section id="progress" class="card progress hidden">
+    <div class="spinner"></div>
+    <div>
+      <strong id="progStep">Starting…</strong>
+      <p class="hint">Large workbooks take a few seconds to read.</p>
+    </div>
+  </section>
+
+  <section id="errorBox" class="card error hidden"></section>
+
+  <!-- ------------------------------------------------ results ----------- -->
+  <section id="results" class="hidden">
+
+    <div class="kpis">
+      <div class="kpi ok">
+        <span class="kpi-label">Matched</span>
+        <span class="kpi-value" id="kMatched">–</span>
+        <span class="kpi-sub">every parameter agrees</span>
+      </div>
+      <div class="kpi warn">
+        <span class="kpi-label">Matched, differs</span>
+        <span class="kpi-value" id="kDiffers">–</span>
+        <span class="kpi-sub">same bill, fields disagree</span>
+      </div>
+      <div class="kpi bad">
+        <span class="kpi-label">Only in GSTR-2B</span>
+        <span class="kpi-value" id="kOnly2b">–</span>
+        <span class="kpi-sub" id="kOnly2bTax">–</span>
+      </div>
+      <div class="kpi bad">
+        <span class="kpi-label">Only in Tally</span>
+        <span class="kpi-value" id="kOnlyTally">–</span>
+        <span class="kpi-sub" id="kOnlyTallyTax">–</span>
+      </div>
+      <div class="kpi neutral">
+        <span class="kpi-label">Rows compared</span>
+        <span class="kpi-value" id="kRows">–</span>
+        <span class="kpi-sub" id="kRowsSub">–</span>
+      </div>
+    </div>
+
+    <div class="toolbar">
+      <div class="chips" id="chips"></div>
+      <a id="xlsxBtn" class="primary small" href="#">Download full report</a>
+    </div>
+
+    <div class="card">
+      <nav class="tabs" id="tabs"></nav>
+
+      <div class="tablebar">
+        <input id="q" placeholder="Filter — GSTIN, supplier, invoice number…">
+        <span id="count" class="count"></span>
+        <a id="csvBtn" class="ghost small" href="#">CSV</a>
+      </div>
+
+      <div class="tablewrap">
+        <table id="grid"><thead></thead><tbody></tbody></table>
+      </div>
+
+      <div class="pager">
+        <button id="prev" class="ghost small" type="button">‹ Prev</button>
+        <span id="pageInfo"></span>
+        <button id="next" class="ghost small" type="button">Next ›</button>
+      </div>
+    </div>
+  </section>
+</main>
+
+<script src="{{ url_for('static', filename='app.js') }}"></script>
+</body>
+</html>
